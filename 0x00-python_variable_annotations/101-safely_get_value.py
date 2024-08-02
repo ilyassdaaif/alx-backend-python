@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-101-safely_get_value
+Return values, add type annotations to the function.
 """
 from typing import Mapping, Any, Union, TypeVar
 

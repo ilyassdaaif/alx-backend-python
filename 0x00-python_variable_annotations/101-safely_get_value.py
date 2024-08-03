@@ -18,8 +18,8 @@ def safely_get_value(
     Args:
         dct (Mapping): The input dictionary.
         key (Any): The key to look up in the dictionary.
-        default (Union[T, None]): The default value to
-        return if the key is not found.
+        default (Union[T, None]): The default value to return if
+        the key is not found.
 
     Returns:
         Union[Any, T]: The value from the dictionary if the key exists,

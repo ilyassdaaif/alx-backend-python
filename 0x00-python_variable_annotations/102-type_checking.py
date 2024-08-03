@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Using mypy to validate the following piece of
-code and apply any necessary changes.
+102-type_checking
 """
 from typing import Tuple, List
 

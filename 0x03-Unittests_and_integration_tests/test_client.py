@@ -77,7 +77,7 @@ class TestGithubOrgClient(unittest.TestCase):
 
             # Assert get_json was called once with the correct argument
             mock_get_json.assert_called_once_with(
-                    "https://api.github.com/orgs/test-org/repos"
+                "https://api.github.com/orgs/test-org/repos"
             )
 
 

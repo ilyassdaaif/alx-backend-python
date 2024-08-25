@@ -1,90 +1,59 @@
 #!/usr/bin/env python3
-"""Unit tests for GithubOrgClient class"""
+"""A github org client
+"""
+from typing import (
+    List,
+    Dict,
+)
 
-import unittest
-from unittest.mock import patch, PropertyMock
-from parameterized import parameterized
-from client import GithubOrgClient
+from utils import (
+    get_json,
+    access_nested_map,
+    memoize,
+)
 
 
-class TestGithubOrgClient(unittest.TestCase):
-    """Tests for GithubOrgClient class"""
+class GithubOrgClient:
+    """A Githib org client
+    """
+    ORG_URL = "https://api.github.com/orgs/{org}"
 
-    @parameterized.expand([
-        ("google",),
-        ("abc",),
-    ])
-    @patch('client.get_json')
-    def test_org(self, org_name, mock_get_json):
-        """Test that GithubOrgClient.org returns the correct value"""
-        client = GithubOrgClient(org_name)
-        client.org()
-        mock_get_json.assert_called_once_with(
-            f"https://api.github.com/orgs/{org_name}"
-        )
+    def __init__(self, org_name: str) -> None:
+        """Init method of GithubOrgClient"""
+        self._org_name = org_name
 
-    def test_public_repos_url(self):
-        """
-        Test that the result of _public_repos_url is the expected one
-        based on the mocked payload.
-        """
-        known_payload = {
-                "repos_url": "https://api.github.com/orgs/testorg/repos"
-        }
+    @memoize
+    def org(self) -> Dict:
+        """Memoize org"""
+        return get_json(self.ORG_URL.format(org=self._org_name))
 
-        with patch.object(GithubOrgClient, 'org',
-                          new_callable=unittest.mock.PropertyMock,
-                          return_value=known_payload) as mock_org:
-            client = GithubOrgClient("testorg")
-            url = client._public_repos_url
-            self.assertEqual(url, known_payload["repos_url"])
-            mock_org.assert_called_once()
+    @property
+    def _public_repos_url(self) -> str:
+        """Public repos URL"""
+        return self.org["repos_url"]
 
-    @patch('client.get_json')
-    def test_public_repos(self, mock_get_json):
-        """
-        Test that GithubOrgClient.public_repos returns the expected
-        list of repos.
-        """
-        # Define test payload
-        test_payload = [
-            {"name": "repo1"},
-            {"name": "repo2"},
-            {"name": "repo3"}
+    @memoize
+    def repos_payload(self) -> Dict:
+        """Memoize repos payload"""
+        return get_json(self._public_repos_url)
+
+    def public_repos(self, license: str = None) -> List[str]:
+        """Public repos"""
+        json_payload = self.repos_payload
+        public_repos = [
+            repo["name"] for repo in json_payload
+            if license is None or self.has_license(repo, license)
         ]
-        mock_get_json.return_value = test_payload
 
-        # Define expected result
-        expected_repos = ["repo1", "repo2", "repo3"]
+        return public_repos
 
-        # Mock _public_repos_url property
-        with patch.object(
-            GithubOrgClient,
-            '_public_repos_url',
-            new_callable=PropertyMock,
-            return_value="https://api.github.com/orgs/test-org/repos"
-        ) as mock_public_repos_url:
-            client = GithubOrgClient("test-org")
-            repos = client.public_repos()
-
-            self.assertEqual(repos, expected_repos)
-            mock_public_repos_url.assert_called_once()
-            mock_get_json.assert_called_once_with(
-                "https://api.github.com/orgs/test-org/repos"
-            )
-
-    @parameterized.expand([
-        ({"license": {"key": "my_license"}}, "my_license", True),
-        ({"license": {"key": "other_license"}}, "my_license", False),
-    ])
-    def test_has_license(self, repo, license_key, expected):
-        """
-        Test that GithubOrgClient.has_license returns the correct value
-        """
-        client = GithubOrgClient("test-org")
-        result = client.has_license(repo, license_key)
-        self.assertEqual(result, expected)
-
-
-if __name__ == "__main__":
-    unittest.main()
+    @staticmethod
+    def has_license(repo: Dict[str, Dict], license_key: str) -> bool:
+        """Static: has_license"""
+        assert license_key is not None, "license_key cannot be None"
+        try:
+            has_license = access_nested_map(
+                    repo, ("license", "key")) == license_key
+        except KeyError:
+            return False
+        return has_license

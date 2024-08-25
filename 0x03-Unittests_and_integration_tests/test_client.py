@@ -93,3 +93,7 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         cls.get_patcher = patch('requests.get', **config)
 
         cls.mock = cls.get_patcher.start()
+
+
+if __name__ == "__main__":
+    unittest.main()

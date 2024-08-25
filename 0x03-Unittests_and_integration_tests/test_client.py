@@ -94,6 +94,11 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
         cls.mock = cls.get_patcher.start()
 
+    @classmethod
+    def tearDownClass(cls):
+        """A class method called after tests in an individual class have run"""
+        cls.get_patcher.stop()
+
 
 if __name__ == "__main__":
     unittest.main()
